@@ -169,319 +169,218 @@ function seleccionarEmpleado(id) {
   }
 }
 
-// Guardar empleado (nuevo o actualización)
-async function guardarEmpleado() {
-  const idField = $("empleadoId");
-  const id = idField ? idField.value : "";
+// Función principal para guardar/actualizar empleado
+function handleGuardar() {
+  const id = $("empleadoId") ? $("empleadoId").value : "";
+  console.log("ID del empleado en handleGuardar:", id);
 
-  console.log("ID del empleado a guardar:", id);
-
-  // Si hay ID, es una actualización
   if (id && id !== "") {
-    return await modificarEmpleado(id);
-  }
+    console.log("Ejecutando actualización");
+    // Es una actualización - SOLO actualizamos
+    const empleado = {
+      nombre: $("nombre") ? $("nombre").value : "",
+      apellido: $("apellido") ? $("apellido").value : "",
+      fecha_nacimiento: $("fechaNacimiento") ? $("fechaNacimiento").value : "",
+      fecha_contratacion: $("fechaContratacion")
+        ? $("fechaContratacion").value
+        : "",
+      telefono: $("telefono") ? $("telefono").value : "",
+      correo: $("correo") ? $("correo").value : "",
+      direccion: $("direccion") ? $("direccion").value : "",
+      salario: $("salario") ? $("salario").value : "",
+    };
 
-  // Si no hay ID, es un nuevo registro
-  const empleado = obtenerDatosFormulario();
-
-  // Validar datos
-  if (!validarDatosEmpleado(empleado)) {
-    return;
-  }
-
-  try {
-    // Guardar empleado
-    const response = await fetch(`${API_URL}/empleado.php`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(empleado),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `Error HTTP: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.error || "Error desconocido al guardar empleado");
-    }
-
-    // Si es profesor, guardar datos de profesor
-    if ($("esProfesor") && $("esProfesor").checked) {
-      await guardarProfesor(result.id);
-    }
-
-    // Actualizar tabla y limpiar formulario
-    await cargarEmpleados();
-    limpiarFormulario();
-
-    // Mostrar mensaje de éxito
-    alert("Empleado guardado con éxito");
-  } catch (error) {
-    console.error("Error al guardar empleado:", error);
-    alert(`Error al guardar empleado: ${error.message}`);
-  }
-}
-
-// Guardar datos de profesor
-async function guardarProfesor(empleadoId) {
-  const profesor = {
-    ID_empleado: empleadoId,
-    especialidad: $("especialidad") ? $("especialidad").value : "",
-    nivel_academico: $("nivelAcademico") ? $("nivelAcademico").value : "",
-    anos_experiencia: $("anosExperiencia") ? $("anosExperiencia").value : "",
-  };
-
-  // Validar datos de profesor
-  if (
-    !profesor.especialidad ||
-    !profesor.nivel_academico ||
-    !profesor.anos_experiencia
-  ) {
-    alert("Por favor, complete todos los campos de profesor");
-    return false;
-  }
-
-  const responseProfesor = await fetch(`${API_URL}/profesor.php`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(profesor),
-  });
-
-  if (!responseProfesor.ok) {
-    const errorData = await responseProfesor.json();
-    throw new Error(
-      errorData.error || `Error HTTP: ${responseProfesor.status}`
-    );
-  }
-
-  const resultProfesor = await responseProfesor.json();
-
-  if (!resultProfesor.success) {
-    throw new Error(
-      resultProfesor.error || "Error desconocido al guardar profesor"
-    );
-  }
-
-  return true;
-}
-
-// Modificar empleado existente
-async function modificarEmpleado(id) {
-  console.log("Modificando empleado con ID:", id);
-
-  if (!id) {
-    alert("Por favor, seleccione un empleado para modificar");
-    return;
-  }
-
-  const empleado = obtenerDatosFormulario();
-
-  // Validar datos
-  if (!validarDatosEmpleado(empleado)) {
-    return;
-  }
-
-  try {
-    console.log("Datos a actualizar:", empleado);
-
-    // Modificar empleado
-    const response = await fetch(`${API_URL}/empleado.php?id=${id}`, {
+    // Hacer la petición PUT para actualizar
+    fetch(`${API_URL}/empleado.php?id=${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(empleado),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `Error HTTP: ${response.status}`);
-    }
-
-    const result = await response.json();
-    console.log("Resultado de actualización:", result);
-
-    if (!result.success) {
-      throw new Error(
-        result.error || "Error desconocido al modificar empleado"
-      );
-    }
-
-    // Verificar si es profesor
-    const esProfesor = $("esProfesor") && $("esProfesor").checked;
-    const eraProfesor =
-      profesores.find((p) => p.ID_empleado == id) !== undefined;
-
-    console.log("¿Es profesor?", esProfesor);
-    console.log("¿Era profesor?", eraProfesor);
-
-    if (esProfesor) {
-      const profesor = {
-        especialidad: $("especialidad") ? $("especialidad").value : "",
-        nivel_academico: $("nivelAcademico") ? $("nivelAcademico").value : "",
-        anos_experiencia: $("anosExperiencia")
-          ? $("anosExperiencia").value
-          : "",
-      };
-
-      // Validar datos de profesor
-      if (
-        !profesor.especialidad ||
-        !profesor.nivel_academico ||
-        !profesor.anos_experiencia
-      ) {
-        alert("Por favor, complete todos los campos de profesor");
-        return;
-      }
-
-      if (eraProfesor) {
-        console.log("Actualizando datos de profesor");
-
-        // Actualizar profesor existente
-        const responseProfesor = await fetch(
-          `${API_URL}/profesor.php?id=${id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(profesor),
-          }
-        );
-
-        if (!responseProfesor.ok) {
-          const errorData = await responseProfesor.json();
-          throw new Error(
-            errorData.error || `Error HTTP: ${responseProfesor.status}`
-          );
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then((err) => {
+            throw err;
+          });
         }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.success) {
+          // Verificar si es profesor
+          const esProfesorCheckbox = $("esProfesor");
+          const esProfesor = esProfesorCheckbox && esProfesorCheckbox.checked;
 
-        const resultProfesor = await responseProfesor.json();
-        console.log("Resultado de actualización profesor:", resultProfesor);
+          // Verificar si el empleado ya es profesor (hacer petición GET)
+          return fetch(`${API_URL}/profesor.php?withEmpleadoInfo=${id}`)
+            .then((response) => response.json())
+            .then((profesorData) => {
+              const eraProfesor =
+                Array.isArray(profesorData) && profesorData.length > 0;
 
-        if (!resultProfesor.success) {
-          throw new Error(
-            resultProfesor.error || "Error desconocido al actualizar profesor"
-          );
+              // Si es profesor y no era profesor, crear nuevo registro de profesor
+              if (esProfesor && !eraProfesor) {
+                const profesor = {
+                  ID_empleado: id,
+                  especialidad: $("especialidad")
+                    ? $("especialidad").value
+                    : "",
+                  nivel_academico: $("nivelAcademico")
+                    ? $("nivelAcademico").value
+                    : "",
+                  anos_experiencia: $("anosExperiencia")
+                    ? $("anosExperiencia").value
+                    : "",
+                };
+
+                return fetch(`${API_URL}/profesor.php`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(profesor),
+                });
+              }
+              // Si es profesor y ya era profesor, actualizar registro existente
+              else if (esProfesor && eraProfesor) {
+                const profesor = {
+                  ID_empleado: id, // Incluir ID en el cuerpo
+                  especialidad: $("especialidad")
+                    ? $("especialidad").value
+                    : "",
+                  nivel_academico: $("nivelAcademico")
+                    ? $("nivelAcademico").value
+                    : "",
+                  anos_experiencia: $("anosExperiencia")
+                    ? $("anosExperiencia").value
+                    : "",
+                };
+
+                return fetch(`${API_URL}/profesor.php?id=${id}`, {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(profesor),
+                });
+              }
+              // Si no es profesor pero era profesor, eliminar registro de profesor
+              else if (!esProfesor && eraProfesor) {
+                return fetch(`${API_URL}/profesor.php?id=${id}`, {
+                  method: "DELETE",
+                });
+              }
+
+              return { ok: true };
+            })
+            .then((response) => {
+              if (!response.ok && response.json) {
+                return response.json().then((err) => {
+                  throw err;
+                });
+              }
+
+              alert("Empleado actualizado con éxito");
+              document.getElementById("empleadoForm").reset();
+              document.getElementById("empleadoId").value = "";
+              location.reload();
+              return; // Asegurarse de que nada más se ejecute
+            });
+        } else {
+          throw new Error(data.error || "Error desconocido");
         }
-      } else {
-        console.log("Creando nuevo profesor con ID:", id);
-
-        // Crear nuevo profesor
-        profesor.ID_empleado = id;
-
-        const responseProfesor = await fetch(`${API_URL}/profesor.php`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(profesor),
-        });
-
-        if (!responseProfesor.ok) {
-          const errorData = await responseProfesor.json();
-          throw new Error(
-            errorData.error || `Error HTTP: ${responseProfesor.status}`
-          );
-        }
-
-        const resultProfesor = await responseProfesor.json();
-        console.log("Resultado creación profesor:", resultProfesor);
-
-        if (!resultProfesor.success) {
-          throw new Error(
-            resultProfesor.error || "Error desconocido al crear profesor"
-          );
-        }
-      }
-    } else if (eraProfesor) {
-      console.log("Eliminando registro de profesor con ID:", id);
-
-      // Eliminar profesor si ya no lo es
-      const responseProfesor = await fetch(`${API_URL}/profesor.php?id=${id}`, {
-        method: "DELETE",
+      })
+      .catch((error) => {
+        console.error("Error al actualizar empleado:", error);
+        alert(`Error al actualizar empleado: ${error.message || error}`);
       });
+  } else {
+    console.log("Ejecutando creación");
+    // Es un nuevo registro
+    const empleado = {
+      nombre: $("nombre") ? $("nombre").value : "",
+      apellido: $("apellido") ? $("apellido").value : "",
+      fecha_nacimiento: $("fechaNacimiento") ? $("fechaNacimiento").value : "",
+      fecha_contratacion: $("fechaContratacion")
+        ? $("fechaContratacion").value
+        : "",
+      telefono: $("telefono") ? $("telefono").value : "",
+      correo: $("correo") ? $("correo").value : "",
+      direccion: $("direccion") ? $("direccion").value : "",
+      salario: $("salario") ? $("salario").value : "",
+    };
 
-      if (!responseProfesor.ok) {
-        const errorData = await responseProfesor.json();
-        throw new Error(
-          errorData.error || `Error HTTP: ${responseProfesor.status}`
-        );
-      }
+    fetch(`${API_URL}/empleado.php`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(empleado),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.json().then((err) => {
+            throw err;
+          });
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (data.success) {
+          // Verificar si es profesor
+          const esProfesorCheckbox = $("esProfesor");
+          const esProfesor = esProfesorCheckbox && esProfesorCheckbox.checked;
 
-      const resultProfesor = await responseProfesor.json();
-      console.log("Resultado eliminación profesor:", resultProfesor);
+          if (esProfesor) {
+            const profesor = {
+              ID_empleado: data.id,
+              especialidad: $("especialidad") ? $("especialidad").value : "",
+              nivel_academico: $("nivelAcademico")
+                ? $("nivelAcademico").value
+                : "",
+              anos_experiencia: $("anosExperiencia")
+                ? $("anosExperiencia").value
+                : "",
+            };
 
-      if (!resultProfesor.success) {
-        throw new Error(
-          resultProfesor.error || "Error desconocido al eliminar profesor"
-        );
-      }
-    }
-
-    // Actualizar tabla y limpiar formulario
-    await cargarEmpleados();
-    limpiarFormulario();
-
-    // Mostrar mensaje de éxito
-    alert("Empleado modificado con éxito");
-  } catch (error) {
-    console.error("Error al modificar empleado:", error);
-    alert(`Error al modificar empleado: ${error.message}`);
+            return fetch(`${API_URL}/profesor.php`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(profesor),
+            })
+              .then((response) => {
+                if (!response.ok) {
+                  return response.json().then((err) => {
+                    throw err;
+                  });
+                }
+                return response.json();
+              })
+              .then((profesorData) => {
+                alert("Empleado y profesor creados con éxito");
+                document.getElementById("empleadoForm").reset();
+                location.reload();
+              });
+          } else {
+            alert("Empleado creado con éxito");
+            document.getElementById("empleadoForm").reset();
+            location.reload();
+          }
+        } else {
+          throw new Error(data.error || "Error desconocido");
+        }
+      })
+      .catch((error) => {
+        console.error("Error al crear empleado:", error);
+        alert(`Error al crear empleado: ${error.message || error}`);
+      });
   }
-}
 
-// Obtener datos del formulario
-function obtenerDatosFormulario() {
-  return {
-    nombre: $("nombre") ? $("nombre").value : "",
-    apellido: $("apellido") ? $("apellido").value : "",
-    fecha_nacimiento: $("fechaNacimiento") ? $("fechaNacimiento").value : "",
-    fecha_contratacion: $("fechaContratacion")
-      ? $("fechaContratacion").value
-      : "",
-    telefono: $("telefono") ? $("telefono").value : "",
-    correo: $("correo") ? $("correo").value : "",
-    direccion: $("direccion") ? $("direccion").value : "",
-    salario: $("salario") ? $("salario").value : "",
-  };
-}
-
-// Validar datos de empleado
-function validarDatosEmpleado(empleado) {
-  if (
-    !empleado.nombre ||
-    !empleado.apellido ||
-    !empleado.fecha_nacimiento ||
-    !empleado.fecha_contratacion ||
-    !empleado.telefono ||
-    !empleado.correo ||
-    !empleado.direccion ||
-    !empleado.salario
-  ) {
-    alert("Por favor, complete todos los campos obligatorios");
-    return false;
-  }
-  return true;
-}
-
-// Limpiar formulario
-function limpiarFormulario() {
-  const form = $("empleadoForm");
-  if (form) form.reset();
-
-  const idField = $("empleadoId");
-  if (idField) idField.value = "";
-
-  const datosProfesor = $("datosProfesor");
-  if (datosProfesor) datosProfesor.style.display = "none";
+  // Prevenir que el evento se propague
+  return false;
 }
 
 // Eliminar empleado
@@ -538,6 +437,18 @@ async function eliminarEmpleado(id) {
     console.error("Error al eliminar empleado:", error);
     alert(`Error al eliminar empleado: ${error.message}`);
   }
+}
+
+// Limpiar formulario
+function limpiarFormulario() {
+  const form = $("empleadoForm");
+  if (form) form.reset();
+
+  const idField = $("empleadoId");
+  if (idField) idField.value = "";
+
+  const datosProfesor = $("datosProfesor");
+  if (datosProfesor) datosProfesor.style.display = "none";
 }
 
 // Confirmar antes de eliminar
@@ -645,7 +556,7 @@ async function consultarEmpleados() {
   }
 }
 
-// Configurar event listeners cuando el DOM esté cargado
+// Asociar eventos a botones cuando el DOM esté cargado
 document.addEventListener("DOMContentLoaded", function () {
   // Verificar autenticación
   const userType = sessionStorage.getItem("userType");
@@ -668,7 +579,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Configurar eventos de botones solo si existen
   if ($("btnGuardar")) {
-    $("btnGuardar").addEventListener("click", guardarEmpleado);
+    $("btnGuardar").addEventListener("click", handleGuardar);
   }
 
   if ($("btnConsultar")) {
