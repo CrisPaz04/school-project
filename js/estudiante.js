@@ -2,7 +2,10 @@
 let estudiantes = [];
 const API_URL = "../api";
 
-// Funciones para operaciones CRUD
+// Función para verificar si un elemento existe en el DOM
+function $(id) {
+  return document.getElementById(id);
+}
 
 // Cargar estudiantes
 async function cargarEstudiantes() {
@@ -27,7 +30,12 @@ async function cargarEstudiantes() {
 
 // Mostrar estudiantes en la tabla
 function actualizarTablaEstudiantes() {
-  const tabla = document.getElementById("tablaEstudiantes");
+  const tabla = $("tablaEstudiantes");
+  if (!tabla) {
+    console.error("Elemento tablaEstudiantes no encontrado");
+    return;
+  }
+
   tabla.innerHTML = ""; // Limpiar tabla
 
   if (!Array.isArray(estudiantes)) {
@@ -70,120 +78,133 @@ function actualizarTablaEstudiantes() {
 
 // Seleccionar estudiante para editar
 function seleccionarEstudiante(id) {
+  console.log("Seleccionando estudiante con ID:", id);
+
   const estudiante = estudiantes.find((e) => e.ID_estudiante == id);
-  if (estudiante) {
-    document.getElementById("estudianteId").value = estudiante.ID_estudiante;
-    document.getElementById("nombre").value = estudiante.nombre;
-    document.getElementById("apellido").value = estudiante.apellido;
-    document.getElementById("fechaNacimiento").value =
-      estudiante.fecha_nacimiento;
-    document.getElementById("direccion").value = estudiante.direccion;
-    document.getElementById("telefono").value = estudiante.telefono || "";
-    document.getElementById("correo").value = estudiante.correo || "";
-    document.getElementById("nombreEncargado").value =
-      estudiante.nombre_encargado;
-  }
+  if (!estudiante) return;
+
+  // Guardar ID en campo oculto
+  $("estudianteId").value = estudiante.ID_estudiante;
+
+  // Llenar formulario con datos del estudiante
+  $("nombre").value = estudiante.nombre;
+  $("apellido").value = estudiante.apellido;
+  $("fechaNacimiento").value = estudiante.fecha_nacimiento;
+  $("direccion").value = estudiante.direccion;
+  $("telefono").value = estudiante.telefono || "";
+  $("correo").value = estudiante.correo || "";
+  $("nombreEncargado").value = estudiante.nombre_encargado;
 }
 
-// Guardar nuevo estudiante
+// Guardar estudiante (nuevo o actualización)
 async function guardarEstudiante() {
+  const id = $("estudianteId") ? $("estudianteId").value : "";
+  console.log("ID del estudiante en guardarEstudiante:", id);
+
   // Obtener datos del formulario
   const estudiante = {
-    nombre: document.getElementById("nombre").value,
-    apellido: document.getElementById("apellido").value,
-    fecha_nacimiento: document.getElementById("fechaNacimiento").value,
-    direccion: document.getElementById("direccion").value,
-    telefono: document.getElementById("telefono").value,
-    correo: document.getElementById("correo").value,
-    nombre_encargado: document.getElementById("nombreEncargado").value,
+    nombre: $("nombre").value,
+    apellido: $("apellido").value,
+    fecha_nacimiento: $("fechaNacimiento").value,
+    direccion: $("direccion").value,
+    telefono: $("telefono").value,
+    correo: $("correo").value,
+    nombre_encargado: $("nombreEncargado").value,
   };
 
-  try {
-    const response = await fetch(`${API_URL}/estudiante.php`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(estudiante),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `Error HTTP: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (result.success) {
-      // Actualizar tabla y limpiar formulario
-      await cargarEstudiantes();
-      document.getElementById("estudianteForm").reset();
-
-      // Mostrar mensaje de éxito
-      alert("Estudiante guardado con éxito");
-    } else {
-      throw new Error(
-        result.error || "Error desconocido al guardar estudiante"
-      );
-    }
-  } catch (error) {
-    console.error("Error al guardar estudiante:", error);
-    alert(`Error al guardar estudiante: ${error.message}`);
-  }
-}
-
-// Modificar estudiante existente
-async function modificarEstudiante() {
-  const id = document.getElementById("estudianteId").value;
-  if (!id) {
-    alert("Por favor, seleccione un estudiante para modificar");
+  // Validar datos
+  if (
+    !estudiante.nombre ||
+    !estudiante.apellido ||
+    !estudiante.fecha_nacimiento ||
+    !estudiante.direccion ||
+    !estudiante.nombre_encargado
+  ) {
+    alert("Por favor, complete todos los campos obligatorios");
     return;
   }
 
-  // Obtener datos del formulario
-  const estudiante = {
-    nombre: document.getElementById("nombre").value,
-    apellido: document.getElementById("apellido").value,
-    fecha_nacimiento: document.getElementById("fechaNacimiento").value,
-    direccion: document.getElementById("direccion").value,
-    telefono: document.getElementById("telefono").value,
-    correo: document.getElementById("correo").value,
-    nombre_encargado: document.getElementById("nombreEncargado").value,
-  };
+  // Si hay ID, es actualización
+  if (id && id !== "") {
+    console.log("Ejecutando actualización de estudiante");
 
-  try {
-    const response = await fetch(`${API_URL}/estudiante.php?id=${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(estudiante),
-    });
+    try {
+      const response = await fetch(`${API_URL}/estudiante.php?id=${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(estudiante),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `Error HTTP: ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Error HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Actualizar tabla y limpiar formulario
+        await cargarEstudiantes();
+        limpiarFormulario();
+
+        // Mostrar mensaje de éxito
+        alert("Estudiante modificado con éxito");
+      } else {
+        throw new Error(
+          result.error || "Error desconocido al modificar estudiante"
+        );
+      }
+    } catch (error) {
+      console.error("Error al modificar estudiante:", error);
+      alert(`Error al modificar estudiante: ${error.message}`);
     }
+  } else {
+    console.log("Ejecutando creación de estudiante");
 
-    const result = await response.json();
+    try {
+      const response = await fetch(`${API_URL}/estudiante.php`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(estudiante),
+      });
 
-    if (result.success) {
-      // Actualizar tabla y limpiar formulario
-      await cargarEstudiantes();
-      document.getElementById("estudianteForm").reset();
-      document.getElementById("estudianteId").value = "";
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Error HTTP: ${response.status}`);
+      }
 
-      // Mostrar mensaje de éxito
-      alert("Estudiante modificado con éxito");
-    } else {
-      throw new Error(
-        result.error || "Error desconocido al modificar estudiante"
-      );
+      const result = await response.json();
+
+      if (result.success) {
+        // Actualizar tabla y limpiar formulario
+        await cargarEstudiantes();
+        limpiarFormulario();
+
+        // Mostrar mensaje de éxito
+        alert("Estudiante guardado con éxito");
+      } else {
+        throw new Error(
+          result.error || "Error desconocido al guardar estudiante"
+        );
+      }
+    } catch (error) {
+      console.error("Error al guardar estudiante:", error);
+      alert(`Error al guardar estudiante: ${error.message}`);
     }
-  } catch (error) {
-    console.error("Error al modificar estudiante:", error);
-    alert(`Error al modificar estudiante: ${error.message}`);
   }
+}
+
+// Limpiar formulario
+function limpiarFormulario() {
+  const form = $("estudianteForm");
+  if (form) form.reset();
+
+  const idField = $("estudianteId");
+  if (idField) idField.value = "";
 }
 
 // Eliminar estudiante
@@ -203,8 +224,7 @@ async function eliminarEstudiante(id) {
     if (result.success) {
       // Actualizar tabla y limpiar formulario
       await cargarEstudiantes();
-      document.getElementById("estudianteForm").reset();
-      document.getElementById("estudianteId").value = "";
+      limpiarFormulario();
 
       // Mostrar mensaje de éxito
       alert("Estudiante eliminado con éxito");
@@ -220,7 +240,25 @@ async function eliminarEstudiante(id) {
 }
 
 // Confirmar antes de eliminar
-function confirmarEliminar(id) {
+async function confirmarEliminar(id) {
+  try {
+    // Verificar si tiene matrículas
+    const responseMatriculas = await fetch(
+      `${API_URL}/matricula.php?estudiante=${id}`
+    );
+    if (responseMatriculas.ok) {
+      const matriculas = await responseMatriculas.json();
+      if (Array.isArray(matriculas) && matriculas.length > 0) {
+        alert(
+          "No se puede eliminar este estudiante porque tiene matrículas asignadas. Elimine primero las matrículas."
+        );
+        return;
+      }
+    }
+  } catch (error) {
+    console.error("Error al verificar dependencias:", error);
+  }
+
   if (confirm("¿Está seguro de que desea eliminar este estudiante?")) {
     eliminarEstudiante(id);
   }
@@ -271,21 +309,30 @@ function aplicarRestricciones() {
 
 // Asociar eventos a botones cuando el DOM esté cargado
 document.addEventListener("DOMContentLoaded", function () {
-  document
-    .getElementById("btnGuardar")
-    .addEventListener("click", guardarEstudiante);
-  document
-    .getElementById("btnModificar")
-    .addEventListener("click", modificarEstudiante);
-  document.getElementById("btnEliminar").addEventListener("click", function () {
-    const id = document.getElementById("estudianteId").value;
-    if (id) {
-      confirmarEliminar(id);
-    } else {
-      alert("Por favor, seleccione un estudiante para eliminar");
-    }
-  });
-  document
-    .getElementById("btnConsultar")
-    .addEventListener("click", consultarEstudiantes);
+  // Verificar autenticación
+  const userType = sessionStorage.getItem("userType");
+  if (!userType) {
+    window.location.href = "../login.html";
+    return;
+  }
+
+  // Cargar datos iniciales
+  cargarEstudiantes();
+
+  // Asociar eventos a botones
+  const btnGuardar = $("btnGuardar");
+  if (btnGuardar) {
+    btnGuardar.addEventListener("click", guardarEstudiante);
+  }
+
+  const btnConsultar = $("btnConsultar");
+  if (btnConsultar) {
+    btnConsultar.addEventListener("click", consultarEstudiantes);
+  }
+
+  // Si existe, quitar evento al botón modificar
+  const btnModificar = $("btnModificar");
+  if (btnModificar) {
+    btnModificar.addEventListener("click", guardarEstudiante);
+  }
 });
