@@ -3,33 +3,22 @@ let empleados = [];
 let profesores = [];
 const API_URL = "../api";
 
-// Funciones para operaciones CRUD
+// Función para verificar si un elemento existe en el DOM
+function $(id) {
+  return document.getElementById(id);
+}
 
 // Mostrar/ocultar campos de profesor
 function toggleCamposProfesor() {
-  const esProfesor = document.getElementById("esProfesor");
-  const datosProfesor = document.getElementById("datosProfesor");
+  const esProfesor = $("esProfesor");
+  const datosProfesor = $("datosProfesor");
 
   if (!esProfesor || !datosProfesor) return;
 
   if (esProfesor.checked) {
     datosProfesor.style.display = "block";
-    const especialidad = document.getElementById("especialidad");
-    const nivelAcademico = document.getElementById("nivelAcademico");
-    const anosExperiencia = document.getElementById("anosExperiencia");
-
-    if (especialidad) especialidad.setAttribute("required", "");
-    if (nivelAcademico) nivelAcademico.setAttribute("required", "");
-    if (anosExperiencia) anosExperiencia.setAttribute("required", "");
   } else {
     datosProfesor.style.display = "none";
-    const especialidad = document.getElementById("especialidad");
-    const nivelAcademico = document.getElementById("nivelAcademico");
-    const anosExperiencia = document.getElementById("anosExperiencia");
-
-    if (especialidad) especialidad.removeAttribute("required");
-    if (nivelAcademico) nivelAcademico.removeAttribute("required");
-    if (anosExperiencia) anosExperiencia.removeAttribute("required");
   }
 }
 
@@ -38,16 +27,13 @@ async function cargarEmpleados() {
   try {
     // Cargar empleados
     const responseEmpleados = await fetch(`${API_URL}/empleado.php`);
-
     if (!responseEmpleados.ok) {
       throw new Error(`Error HTTP: ${responseEmpleados.status}`);
     }
-
     empleados = await responseEmpleados.json();
 
     // Cargar profesores
     const responseProfesores = await fetch(`${API_URL}/profesor.php`);
-
     if (responseProfesores.ok) {
       profesores = await responseProfesores.json();
     } else {
@@ -65,7 +51,12 @@ async function cargarEmpleados() {
 
 // Mostrar empleados en la tabla
 function actualizarTablaEmpleados() {
-  const tabla = document.getElementById("tablaEmpleados");
+  const tabla = $("tablaEmpleados");
+  if (!tabla) {
+    console.error("Elemento tablaEmpleados no encontrado");
+    return;
+  }
+
   tabla.innerHTML = ""; // Limpiar tabla
 
   if (!Array.isArray(empleados)) {
@@ -81,124 +72,120 @@ function actualizarTablaEmpleados() {
 
   empleados.forEach((empleado) => {
     const fila = document.createElement("tr");
-
     // Determinar si es profesor
     const esProfesor = profesoresMap[empleado.ID_empleado] !== undefined;
 
     // Crear celdas con datos
     fila.innerHTML = `
-            <td>${empleado.ID_empleado}</td>
-            <td>${empleado.nombre}</td>
-            <td>${empleado.apellido}</td>
-            <td>${empleado.telefono}</td>
-            <td>${empleado.correo}</td>
-            <td>${empleado.fecha_contratacion}</td>
-            <td>${parseFloat(empleado.salario).toLocaleString("es-HN", {
-              style: "currency",
-              currency: "HNL",
-            })}</td>
-            <td>${
-              esProfesor
-                ? '<span class="badge bg-success">Sí</span>'
-                : '<span class="badge bg-secondary">No</span>'
-            }</td>
-            <td class="action-buttons">
-                <button class="btn btn-sm btn-primary" onclick="seleccionarEmpleado(${
-                  empleado.ID_empleado
-                })">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn btn-sm btn-danger" onclick="confirmarEliminar(${
-                  empleado.ID_empleado
-                })">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </td>
-        `;
+      <td>${empleado.ID_empleado}</td>
+      <td>${empleado.nombre}</td>
+      <td>${empleado.apellido}</td>
+      <td>${empleado.telefono || ""}</td>
+      <td>${empleado.correo || ""}</td>
+      <td>${empleado.fecha_contratacion || ""}</td>
+      <td>${parseFloat(empleado.salario || 0).toLocaleString("es-HN", {
+        style: "currency",
+        currency: "HNL",
+      })}</td>
+      <td>${
+        esProfesor
+          ? '<span class="badge bg-success">Sí</span>'
+          : '<span class="badge bg-secondary">No</span>'
+      }</td>
+      <td class="action-buttons">
+        <button class="btn btn-sm btn-primary" onclick="seleccionarEmpleado(${
+          empleado.ID_empleado
+        })">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn btn-sm btn-danger" onclick="confirmarEliminar(${
+          empleado.ID_empleado
+        })">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
+    `;
 
     tabla.appendChild(fila);
   });
 }
 
 // Seleccionar empleado para editar
-async function seleccionarEmpleado(id) {
+function seleccionarEmpleado(id) {
   console.log("Seleccionando empleado con ID:", id);
+
   const empleado = empleados.find((e) => e.ID_empleado == id);
-  if (empleado) {
-    document.getElementById("empleadoId").value = empleado.ID_empleado;
-    console.log("ID empleado establecido en:", empleado.ID_empleado);
+  if (!empleado) return;
 
-    document.getElementById("nombre").value = empleado.nombre;
-    document.getElementById("apellido").value = empleado.apellido;
-    document.getElementById("fechaNacimiento").value =
-      empleado.fecha_nacimiento;
-    document.getElementById("fechaContratacion").value =
-      empleado.fecha_contratacion;
-    document.getElementById("telefono").value = empleado.telefono;
-    document.getElementById("correo").value = empleado.correo;
-    document.getElementById("direccion").value = empleado.direccion;
-    document.getElementById("salario").value = empleado.salario;
+  const idField = $("empleadoId");
+  if (idField) idField.value = empleado.ID_empleado;
 
-    // Verificar si es profesor
-    const esProfesor = profesores.find((p) => p.ID_empleado == id);
-    document.getElementById("esProfesor").checked = esProfesor !== undefined;
-    toggleCamposProfesor();
+  const fields = {
+    nombre: empleado.nombre,
+    apellido: empleado.apellido,
+    fechaNacimiento: empleado.fecha_nacimiento,
+    fechaContratacion: empleado.fecha_contratacion,
+    telefono: empleado.telefono,
+    correo: empleado.correo,
+    direccion: empleado.direccion,
+    salario: empleado.salario,
+  };
 
-    if (esProfesor) {
-      document.getElementById("especialidad").value = esProfesor.especialidad;
-      document.getElementById("nivelAcademico").value =
-        esProfesor.nivel_academico;
-      document.getElementById("anosExperiencia").value =
-        esProfesor.anos_experiencia;
-    } else {
-      document.getElementById("especialidad").value = "";
-      document.getElementById("nivelAcademico").value = "";
-      document.getElementById("anosExperiencia").value = "";
+  // Rellenar los campos del formulario
+  for (const [fieldId, value] of Object.entries(fields)) {
+    const field = $(fieldId);
+    if (field) field.value = value || "";
+  }
+
+  // Verificar si es profesor
+  const esProfesor = profesores.find((p) => p.ID_empleado == id);
+  const esProfesorField = $("esProfesor");
+  if (esProfesorField) esProfesorField.checked = esProfesor !== undefined;
+
+  // Mostrar/ocultar campos de profesor
+  toggleCamposProfesor();
+
+  if (esProfesor) {
+    const profesorFields = {
+      especialidad: esProfesor.especialidad,
+      nivelAcademico: esProfesor.nivel_academico,
+      anosExperiencia: esProfesor.anos_experiencia,
+    };
+
+    for (const [fieldId, value] of Object.entries(profesorFields)) {
+      const field = $(fieldId);
+      if (field) field.value = value || "";
     }
+  } else {
+    const profesorFields = [
+      "especialidad",
+      "nivelAcademico",
+      "anosExperiencia",
+    ];
+    profesorFields.forEach((fieldId) => {
+      const field = $(fieldId);
+      if (field) field.value = "";
+    });
   }
 }
 
-// Guardar nuevo empleado
-async function guardarEmpleado(event) {
-  // Evitar comportamiento de formulario por defecto
-  if (event) event.preventDefault();
+// Guardar empleado (nuevo o actualización)
+async function guardarEmpleado() {
+  const idField = $("empleadoId");
+  const id = idField ? idField.value : "";
 
-  // Verificar si es una actualización o un nuevo registro
-  const id = document.getElementById("empleadoId").value;
-  console.log("Valor actual de empleadoId:", id);
+  console.log("ID del empleado a guardar:", id);
 
+  // Si hay ID, es una actualización
   if (id && id !== "") {
-    console.log("Es una actualización, ID:", id);
-    await modificarEmpleado();
-    return;
-  } else {
-    console.log("Es un nuevo registro");
+    return await modificarEmpleado(id);
   }
 
-  // Obtener datos del formulario
-  const empleado = {
-    nombre: document.getElementById("nombre").value,
-    apellido: document.getElementById("apellido").value,
-    fecha_nacimiento: document.getElementById("fechaNacimiento").value,
-    fecha_contratacion: document.getElementById("fechaContratacion").value,
-    telefono: document.getElementById("telefono").value,
-    correo: document.getElementById("correo").value,
-    direccion: document.getElementById("direccion").value,
-    salario: document.getElementById("salario").value,
-  };
+  // Si no hay ID, es un nuevo registro
+  const empleado = obtenerDatosFormulario();
 
   // Validar datos
-  if (
-    !empleado.nombre ||
-    !empleado.apellido ||
-    !empleado.fecha_nacimiento ||
-    !empleado.fecha_contratacion ||
-    !empleado.telefono ||
-    !empleado.correo ||
-    !empleado.direccion ||
-    !empleado.salario
-  ) {
-    alert("Por favor, complete todos los campos obligatorios");
+  if (!validarDatosEmpleado(empleado)) {
     return;
   }
 
@@ -223,57 +210,14 @@ async function guardarEmpleado(event) {
       throw new Error(result.error || "Error desconocido al guardar empleado");
     }
 
-    const nuevoEmpleadoId = result.id;
-
     // Si es profesor, guardar datos de profesor
-    const esProfesor = document.getElementById("esProfesor").checked;
-    if (esProfesor) {
-      const profesor = {
-        ID_empleado: nuevoEmpleadoId,
-        especialidad: document.getElementById("especialidad").value,
-        nivel_academico: document.getElementById("nivelAcademico").value,
-        anos_experiencia: document.getElementById("anosExperiencia").value,
-      };
-
-      // Validar datos de profesor
-      if (
-        !profesor.especialidad ||
-        !profesor.nivel_academico ||
-        !profesor.anos_experiencia
-      ) {
-        alert("Por favor, complete todos los campos de profesor");
-        return;
-      }
-
-      const responseProfesor = await fetch(`${API_URL}/profesor.php`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(profesor),
-      });
-
-      if (!responseProfesor.ok) {
-        const errorData = await responseProfesor.json();
-        throw new Error(
-          errorData.error || `Error HTTP: ${responseProfesor.status}`
-        );
-      }
-
-      const resultProfesor = await responseProfesor.json();
-
-      if (!resultProfesor.success) {
-        throw new Error(
-          resultProfesor.error || "Error desconocido al guardar profesor"
-        );
-      }
+    if ($("esProfesor") && $("esProfesor").checked) {
+      await guardarProfesor(result.id);
     }
 
     // Actualizar tabla y limpiar formulario
     await cargarEmpleados();
-    document.getElementById("empleadoForm").reset();
-    document.getElementById("datosProfesor").style.display = "none";
-    document.getElementById("empleadoId").value = ""; // Limpiar el ID oculto
+    limpiarFormulario();
 
     // Mostrar mensaje de éxito
     alert("Empleado guardado con éxito");
@@ -283,9 +227,53 @@ async function guardarEmpleado(event) {
   }
 }
 
+// Guardar datos de profesor
+async function guardarProfesor(empleadoId) {
+  const profesor = {
+    ID_empleado: empleadoId,
+    especialidad: $("especialidad") ? $("especialidad").value : "",
+    nivel_academico: $("nivelAcademico") ? $("nivelAcademico").value : "",
+    anos_experiencia: $("anosExperiencia") ? $("anosExperiencia").value : "",
+  };
+
+  // Validar datos de profesor
+  if (
+    !profesor.especialidad ||
+    !profesor.nivel_academico ||
+    !profesor.anos_experiencia
+  ) {
+    alert("Por favor, complete todos los campos de profesor");
+    return false;
+  }
+
+  const responseProfesor = await fetch(`${API_URL}/profesor.php`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(profesor),
+  });
+
+  if (!responseProfesor.ok) {
+    const errorData = await responseProfesor.json();
+    throw new Error(
+      errorData.error || `Error HTTP: ${responseProfesor.status}`
+    );
+  }
+
+  const resultProfesor = await responseProfesor.json();
+
+  if (!resultProfesor.success) {
+    throw new Error(
+      resultProfesor.error || "Error desconocido al guardar profesor"
+    );
+  }
+
+  return true;
+}
+
 // Modificar empleado existente
-async function modificarEmpleado() {
-  const id = document.getElementById("empleadoId").value;
+async function modificarEmpleado(id) {
   console.log("Modificando empleado con ID:", id);
 
   if (!id) {
@@ -293,35 +281,15 @@ async function modificarEmpleado() {
     return;
   }
 
-  // Obtener datos del formulario
-  const empleado = {
-    nombre: document.getElementById("nombre").value,
-    apellido: document.getElementById("apellido").value,
-    fecha_nacimiento: document.getElementById("fechaNacimiento").value,
-    fecha_contratacion: document.getElementById("fechaContratacion").value,
-    telefono: document.getElementById("telefono").value,
-    correo: document.getElementById("correo").value,
-    direccion: document.getElementById("direccion").value,
-    salario: document.getElementById("salario").value,
-  };
+  const empleado = obtenerDatosFormulario();
 
   // Validar datos
-  if (
-    !empleado.nombre ||
-    !empleado.apellido ||
-    !empleado.fecha_nacimiento ||
-    !empleado.fecha_contratacion ||
-    !empleado.telefono ||
-    !empleado.correo ||
-    !empleado.direccion ||
-    !empleado.salario
-  ) {
-    alert("Por favor, complete todos los campos obligatorios");
+  if (!validarDatosEmpleado(empleado)) {
     return;
   }
 
   try {
-    console.log("Enviando datos de actualización:", empleado);
+    console.log("Datos a actualizar:", empleado);
 
     // Modificar empleado
     const response = await fetch(`${API_URL}/empleado.php?id=${id}`, {
@@ -338,7 +306,7 @@ async function modificarEmpleado() {
     }
 
     const result = await response.json();
-    console.log("Resultado de la actualización:", result);
+    console.log("Resultado de actualización:", result);
 
     if (!result.success) {
       throw new Error(
@@ -347,7 +315,7 @@ async function modificarEmpleado() {
     }
 
     // Verificar si es profesor
-    const esProfesor = document.getElementById("esProfesor").checked;
+    const esProfesor = $("esProfesor") && $("esProfesor").checked;
     const eraProfesor =
       profesores.find((p) => p.ID_empleado == id) !== undefined;
 
@@ -356,9 +324,11 @@ async function modificarEmpleado() {
 
     if (esProfesor) {
       const profesor = {
-        especialidad: document.getElementById("especialidad").value,
-        nivel_academico: document.getElementById("nivelAcademico").value,
-        anos_experiencia: document.getElementById("anosExperiencia").value,
+        especialidad: $("especialidad") ? $("especialidad").value : "",
+        nivel_academico: $("nivelAcademico") ? $("nivelAcademico").value : "",
+        anos_experiencia: $("anosExperiencia")
+          ? $("anosExperiencia").value
+          : "",
       };
 
       // Validar datos de profesor
@@ -372,7 +342,7 @@ async function modificarEmpleado() {
       }
 
       if (eraProfesor) {
-        console.log("Actualizando datos de profesor:", profesor);
+        console.log("Actualizando datos de profesor");
 
         // Actualizar profesor existente
         const responseProfesor = await fetch(
@@ -394,7 +364,7 @@ async function modificarEmpleado() {
         }
 
         const resultProfesor = await responseProfesor.json();
-        console.log("Resultado actualización profesor:", resultProfesor);
+        console.log("Resultado de actualización profesor:", resultProfesor);
 
         if (!resultProfesor.success) {
           throw new Error(
@@ -458,9 +428,7 @@ async function modificarEmpleado() {
 
     // Actualizar tabla y limpiar formulario
     await cargarEmpleados();
-    document.getElementById("empleadoForm").reset();
-    document.getElementById("empleadoId").value = "";
-    document.getElementById("datosProfesor").style.display = "none";
+    limpiarFormulario();
 
     // Mostrar mensaje de éxito
     alert("Empleado modificado con éxito");
@@ -468,6 +436,52 @@ async function modificarEmpleado() {
     console.error("Error al modificar empleado:", error);
     alert(`Error al modificar empleado: ${error.message}`);
   }
+}
+
+// Obtener datos del formulario
+function obtenerDatosFormulario() {
+  return {
+    nombre: $("nombre") ? $("nombre").value : "",
+    apellido: $("apellido") ? $("apellido").value : "",
+    fecha_nacimiento: $("fechaNacimiento") ? $("fechaNacimiento").value : "",
+    fecha_contratacion: $("fechaContratacion")
+      ? $("fechaContratacion").value
+      : "",
+    telefono: $("telefono") ? $("telefono").value : "",
+    correo: $("correo") ? $("correo").value : "",
+    direccion: $("direccion") ? $("direccion").value : "",
+    salario: $("salario") ? $("salario").value : "",
+  };
+}
+
+// Validar datos de empleado
+function validarDatosEmpleado(empleado) {
+  if (
+    !empleado.nombre ||
+    !empleado.apellido ||
+    !empleado.fecha_nacimiento ||
+    !empleado.fecha_contratacion ||
+    !empleado.telefono ||
+    !empleado.correo ||
+    !empleado.direccion ||
+    !empleado.salario
+  ) {
+    alert("Por favor, complete todos los campos obligatorios");
+    return false;
+  }
+  return true;
+}
+
+// Limpiar formulario
+function limpiarFormulario() {
+  const form = $("empleadoForm");
+  if (form) form.reset();
+
+  const idField = $("empleadoId");
+  if (idField) idField.value = "";
+
+  const datosProfesor = $("datosProfesor");
+  if (datosProfesor) datosProfesor.style.display = "none";
 }
 
 // Eliminar empleado
@@ -491,7 +505,6 @@ async function eliminarEmpleado(id) {
       }
 
       const resultProfesor = await responseProfesor.json();
-
       if (!resultProfesor.success) {
         throw new Error(
           resultProfesor.error || "Error desconocido al eliminar profesor"
@@ -514,9 +527,7 @@ async function eliminarEmpleado(id) {
     if (result.success) {
       // Actualizar tabla y limpiar formulario
       await cargarEmpleados();
-      document.getElementById("empleadoForm").reset();
-      document.getElementById("empleadoId").value = "";
-      document.getElementById("datosProfesor").style.display = "none";
+      limpiarFormulario();
 
       // Mostrar mensaje de éxito
       alert("Empleado eliminado con éxito");
@@ -634,7 +645,7 @@ async function consultarEmpleados() {
   }
 }
 
-// Asociar eventos a botones cuando el DOM esté cargado
+// Configurar event listeners cuando el DOM esté cargado
 document.addEventListener("DOMContentLoaded", function () {
   // Verificar autenticación
   const userType = sessionStorage.getItem("userType");
@@ -650,41 +661,20 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
-  // Prevenir envío del formulario
-  const form = document.getElementById("empleadoForm");
-  if (form) {
-    form.addEventListener("submit", function (event) {
-      event.preventDefault();
-      console.log("Envío de formulario prevenido");
-    });
+  // Configurar evento para mostrar/ocultar campos de profesor
+  if ($("esProfesor")) {
+    $("esProfesor").addEventListener("change", toggleCamposProfesor);
   }
 
-  // Evento para mostrar/ocultar campos de profesor
-  const esProfesor = document.getElementById("esProfesor");
-  if (esProfesor) {
-    esProfesor.addEventListener("change", toggleCamposProfesor);
+  // Configurar eventos de botones solo si existen
+  if ($("btnGuardar")) {
+    $("btnGuardar").addEventListener("click", guardarEmpleado);
+  }
+
+  if ($("btnConsultar")) {
+    $("btnConsultar").addEventListener("click", consultarEmpleados);
   }
 
   // Cargar datos iniciales
   cargarEmpleados();
-
-  // Asociar eventos a botones
-  const btnGuardar = document.getElementById("btnGuardar");
-  if (btnGuardar) {
-    btnGuardar.addEventListener("click", function (event) {
-      guardarEmpleado(event);
-    });
-  }
-
-  // Quitar el botón Modificar del HTML o asociarle la función modificarEmpleado si existe
-  const btnModificar = document.getElementById("btnModificar");
-  if (btnModificar) {
-    btnModificar.addEventListener("click", modificarEmpleado);
-  }
-
-  // Botón consultar
-  const btnConsultar = document.getElementById("btnConsultar");
-  if (btnConsultar) {
-    btnConsultar.addEventListener("click", consultarEmpleados);
-  }
 });
