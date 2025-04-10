@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Profesores - Sistema Escolar</title>
+    <title>Listado de Profesores - Sistema Escolar</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/styles.css">
@@ -13,7 +13,7 @@
 <body>
     <div class="container">
         <header class="d-flex justify-content-between align-items-center py-3 mb-4 border-bottom">
-            <h1 class="h4">Gestión de Profesores</h1>
+            <h1 class="h4">Listado de Profesores</h1>
             <div>
                 <a href="../index.html" class="btn btn-outline-secondary">Volver al Menú</a>
                 <button class="btn btn-outline-danger ms-2" onclick="logout()">Cerrar Sesión</button>
@@ -22,48 +22,24 @@
 
         <div class="row mb-4">
             <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-secondary text-white">
-                        <h5 class="mb-0">Formulario de Profesor</h5>
-                    </div>
+                <div class="card bg-light">
                     <div class="card-body">
-                        <form id="profesorForm">
-                            <input type="hidden" id="profesorId" value="">
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="empleado" class="form-label">Empleado</label>
-                                    <select class="form-select" id="empleado" required>
-                                        <option value="">Seleccione un empleado</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="especialidad" class="form-label">Especialidad</label>
-                                    <input type="text" class="form-control" id="especialidad" required>
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="nivelAcademico" class="form-label">Nivel Académico</label>
-                                    <select class="form-select" id="nivelAcademico" required>
-                                        <option value="">Seleccione un nivel</option>
-                                        <option value="Licenciatura">Licenciatura</option>
-                                        <option value="Maestría">Maestría</option>
-                                        <option value="Doctorado">Doctorado</option>
-                                        <option value="Postdoctorado">Postdoctorado</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="anosExperiencia" class="form-label">Años de Experiencia</label>
-                                    <input type="number" class="form-control" id="anosExperiencia" min="0" required>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <button type="button" class="btn btn-success create-teacher-btn"
-                                    id="btnGuardar">Guardar</button>
-                                <button type="button" class="btn btn-info" id="btnConsultar">Consultar</button>
-                                <button type="reset" class="btn btn-secondary">Limpiar</button>
-                            </div>
-                        </form>
+                        <div class="alert alert-info" role="alert">
+                            <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Información</h5>
+                            <p>La gestión de profesores se realiza a través del módulo de empleados.</p>
+                            <hr>
+                            <p class="mb-0">Para crear un nuevo profesor, vaya a <a href="empleado.html"
+                                    class="alert-link">Gestión de Empleados</a>,
+                                complete el formulario y marque la casilla "Es Profesor".</p>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="empleado.html" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-2"></i>Crear Nuevo Profesor
+                            </a>
+                            <button type="button" class="btn btn-info" id="btnConsultar">
+                                <i class="fas fa-search me-2"></i>Filtrar Profesores
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
