@@ -39,6 +39,10 @@ function actualizarTablaProfesores() {
     console.error("Los datos de profesores no son un array:", profesores);
     return;
   }
+  
+  // Verificar si el usuario es profesor_guia para restringir acciones
+  const userType = sessionStorage.getItem("userType");
+  const esProfesorGuia = userType === "profesor_guia";
 
   profesores.forEach((profesor) => {
     const fila = document.createElement("tr");
@@ -52,11 +56,10 @@ function actualizarTablaProfesores() {
             <td>${profesor.anos_experiencia}</td>
             <td>${profesor.correo || "-"}<br>${profesor.telefono || "-"}</td>
             <td class="action-buttons">
-                <a href="empleado.html?id=${
-                  profesor.ID_empleado
-                }" class="btn btn-sm btn-primary" title="Editar en Empleados">
+                ${!esProfesorGuia ? 
+                `<a href="empleado.html?id=${profesor.ID_empleado}" class="btn btn-sm btn-primary" title="Editar en Empleados">
                     <i class="fas fa-edit"></i> Editar
-                </a>
+                </a>` : ''}
             </td>
         `;
 
@@ -143,6 +146,24 @@ async function consultarProfesores() {
   }
 }
 
+// Función para aplicar restricciones según el tipo de usuario
+function aplicarRestricciones() {
+  const userType = sessionStorage.getItem("userType");
+  if (userType === "profesor_guia") {
+    // Ocultar el botón de crear nuevo profesor
+    const crearBtn = document.querySelector('a[href="empleado.html"]');
+    if (crearBtn) {
+      crearBtn.style.display = "none";
+    }
+    
+    // También podemos ocultar la alerta informativa
+    const infoAlert = document.querySelector('.alert.alert-info');
+    if (infoAlert) {
+      infoAlert.innerHTML = "<h5 class='alert-heading'><i class='fas fa-info-circle me-2'></i>Información</h5><p>Como profesor guía, solo puede ver la información de los profesores.</p>";
+    }
+  }
+}
+
 // Función para obtener parámetros de la URL
 function getUrlParams() {
   const params = {};
@@ -173,6 +194,13 @@ document.addEventListener("DOMContentLoaded", function () {
   // Verificar si hay un ID en la URL
   const params = getUrlParams();
   if (params.id) {
+    // Si es profesor_guia, no permitir la edición
+    if (userType === "profesor_guia") {
+      alert("No tiene permisos para editar profesores");
+      window.location.href = "profesor.html";
+      return;
+    }
+    
     // Redirigir a la página de empleados con el ID
     redirigirAEmpleado(params.id);
     return; // Importante: evitar que se ejecute el resto del código
@@ -180,6 +208,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Cargar datos iniciales
   cargarProfesores();
+  
+  // Aplicar restricciones según el tipo de usuario
+  aplicarRestricciones();
 
   // Asociar eventos a botones
   const btnConsultar = document.getElementById("btnConsultar");

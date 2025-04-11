@@ -24,7 +24,7 @@
             <div class="col-md-12">
                 <div class="card bg-light">
                     <div class="card-body">
-                        <div class="alert alert-info" role="alert">
+                        <div class="alert alert-info" role="alert" id="infoAlert">
                             <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Información</h5>
                             <p>La gestión de profesores se realiza a través del módulo de empleados.</p>
                             <hr>
@@ -32,8 +32,8 @@
                                     class="alert-link">Gestión de Empleados</a>,
                                 complete el formulario y marque la casilla "Es Profesor".</p>
                         </div>
-                        <div class="d-flex justify-content-between">
-                            <a href="empleado.html" class="btn btn-primary">
+                        <div class="d-flex justify-content-between" id="actionButtons">
+                            <a href="empleado.html" class="btn btn-primary" id="crearProfesorBtn">
                                 <i class="fas fa-user-plus me-2"></i>Crear Nuevo Profesor
                             </a>
                             <button type="button" class="btn btn-info" id="btnConsultar">Consultar</button>
@@ -75,6 +75,43 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/login.js"></script>
+    <script>
+        // Función para verificar permisos según el tipo de usuario
+        function verificarPermisos() {
+            const userType = sessionStorage.getItem('userType');
+            
+            if (!userType) {
+                window.location.href = '../login.html';
+                return;
+            }
+            
+            if (userType === 'profesor_guia') {
+                // Ocultar botón de crear
+                const crearBtn = document.getElementById('crearProfesorBtn');
+                if (crearBtn) crearBtn.style.display = 'none';
+                
+                // Modificar mensaje de información
+                const infoAlert = document.getElementById('infoAlert');
+                if (infoAlert) {
+                    infoAlert.innerHTML = `
+                        <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Información</h5>
+                        <p>Como profesor guía, solo puede ver la información de los profesores.</p>
+                    `;
+                }
+            }
+        }
+        
+        // Verificar permisos al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            verificarPermisos();
+        });
+        
+        function logout() {
+            sessionStorage.removeItem('username');
+            sessionStorage.removeItem('userType');
+            window.location.href = '../login.html';
+        }
+    </script>
     <script src="../js/profesor.js"></script>
 </body>
 

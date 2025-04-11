@@ -25,14 +25,23 @@ switch ($method) {
         break;
         
     case 'POST':
+        if ($userType !== 'dba_colegio') { // Solo el DBA puede crear profesores
+            sendResponse(["error" => "No tiene permisos para crear profesores"], 403);
+        }
         handlePost($profesor, $userType);
         break;
         
     case 'PUT':
+        if ($userType !== 'dba_colegio') { // Solo el DBA puede modificar profesores
+            sendResponse(["error" => "No tiene permisos para modificar profesores"], 403);
+        }
         handlePut($profesor, $userType);
         break;
         
     case 'DELETE':
+        if ($userType !== 'dba_colegio') { // Solo el DBA puede eliminar profesores
+            sendResponse(["error" => "No tiene permisos para eliminar profesores"], 403);
+        }
         handleDelete($profesor, $userType);
         break;
         
