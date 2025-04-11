@@ -1,14 +1,11 @@
-// Variables globales
 let empleados = [];
 let profesores = [];
 const API_URL = "../api";
 
-// Función para verificar si un elemento existe en el DOM
 function $(id) {
   return document.getElementById(id);
 }
 
-// Mostrar/ocultar campos de profesor
 function toggleCamposProfesor() {
   const esProfesor = $("esProfesor");
   const datosProfesor = $("datosProfesor");
@@ -22,17 +19,14 @@ function toggleCamposProfesor() {
   }
 }
 
-// Cargar empleados
 async function cargarEmpleados() {
   try {
-    // Cargar empleados
     const responseEmpleados = await fetch(`${API_URL}/empleado.php`);
     if (!responseEmpleados.ok) {
       throw new Error(`Error HTTP: ${responseEmpleados.status}`);
     }
     empleados = await responseEmpleados.json();
 
-    // Cargar profesores
     const responseProfesores = await fetch(`${API_URL}/profesor.php`);
     if (responseProfesores.ok) {
       profesores = await responseProfesores.json();
@@ -41,7 +35,6 @@ async function cargarEmpleados() {
       profesores = [];
     }
 
-    // Actualizar la tabla con los datos
     actualizarTablaEmpleados();
   } catch (error) {
     console.error("Error al cargar empleados:", error);
@@ -49,7 +42,6 @@ async function cargarEmpleados() {
   }
 }
 
-// Mostrar empleados en la tabla
 function actualizarTablaEmpleados() {
   const tabla = $("tablaEmpleados");
   if (!tabla) {
@@ -57,14 +49,13 @@ function actualizarTablaEmpleados() {
     return;
   }
 
-  tabla.innerHTML = ""; // Limpiar tabla
+  tabla.innerHTML = ""; 
 
   if (!Array.isArray(empleados)) {
     console.error("Los datos de empleados no son un array:", empleados);
     return;
   }
 
-  // Crear un mapa de profesores para búsqueda rápida
   const profesoresMap = {};
   profesores.forEach((profesor) => {
     profesoresMap[profesor.ID_empleado] = profesor;
@@ -72,10 +63,8 @@ function actualizarTablaEmpleados() {
 
   empleados.forEach((empleado) => {
     const fila = document.createElement("tr");
-    // Determinar si es profesor
     const esProfesor = profesoresMap[empleado.ID_empleado] !== undefined;
 
-    // Crear celdas con datos
     fila.innerHTML = `
       <td>${empleado.ID_empleado}</td>
       <td>${empleado.nombre}</td>
@@ -110,7 +99,6 @@ function actualizarTablaEmpleados() {
   });
 }
 
-// Seleccionar empleado para editar
 function seleccionarEmpleado(id) {
   console.log("Seleccionando empleado con ID:", id);
 
@@ -131,18 +119,15 @@ function seleccionarEmpleado(id) {
     salario: empleado.salario,
   };
 
-  // Rellenar los campos del formulario
   for (const [fieldId, value] of Object.entries(fields)) {
     const field = $(fieldId);
     if (field) field.value = value || "";
   }
 
-  // Verificar si es profesor
   const esProfesor = profesores.find((p) => p.ID_empleado == id);
   const esProfesorField = $("esProfesor");
   if (esProfesorField) esProfesorField.checked = esProfesor !== undefined;
 
-  // Mostrar/ocultar campos de profesor
   toggleCamposProfesor();
 
   if (esProfesor) {
@@ -169,14 +154,12 @@ function seleccionarEmpleado(id) {
   }
 }
 
-// Función principal para guardar/actualizar empleado
 function handleGuardar() {
   const id = $("empleadoId") ? $("empleadoId").value : "";
   console.log("ID del empleado en handleGuardar:", id);
 
   if (id && id !== "") {
     console.log("Ejecutando actualización");
-    // Es una actualización - SOLO actualizamos
     const empleado = {
       nombre: $("nombre") ? $("nombre").value : "",
       apellido: $("apellido") ? $("apellido").value : "",
@@ -190,7 +173,6 @@ function handleGuardar() {
       salario: $("salario") ? $("salario").value : "",
     };
 
-    // Hacer la petición PUT para actualizar
     fetch(`${API_URL}/empleado.php?id=${id}`, {
       method: "PUT",
       headers: {
@@ -208,18 +190,15 @@ function handleGuardar() {
       })
       .then((data) => {
         if (data.success) {
-          // Verificar si es profesor
           const esProfesorCheckbox = $("esProfesor");
           const esProfesor = esProfesorCheckbox && esProfesorCheckbox.checked;
 
-          // Verificar si el empleado ya es profesor (hacer petición GET)
           return fetch(`${API_URL}/profesor.php?withEmpleadoInfo=${id}`)
             .then((response) => response.json())
             .then((profesorData) => {
               const eraProfesor =
                 Array.isArray(profesorData) && profesorData.length > 0;
 
-              // Si es profesor y no era profesor, crear nuevo registro de profesor
               if (esProfesor && !eraProfesor) {
                 const profesor = {
                   ID_empleado: id,

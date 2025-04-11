@@ -1,10 +1,6 @@
-// Variables globales
 let profesores = [];
 const API_URL = "../api";
 
-// Funciones para operaciones CRUD
-
-// Cargar profesores
 async function cargarProfesores() {
   try {
     const response = await fetch(
@@ -17,7 +13,6 @@ async function cargarProfesores() {
 
     profesores = await response.json();
 
-    // Actualizar la tabla con los datos
     actualizarTablaProfesores();
   } catch (error) {
     console.error("Error al cargar profesores:", error);
@@ -25,7 +20,6 @@ async function cargarProfesores() {
   }
 }
 
-// Mostrar profesores en la tabla
 function actualizarTablaProfesores() {
   const tabla = document.getElementById("tablaProfesores");
   if (!tabla) {
@@ -33,21 +27,19 @@ function actualizarTablaProfesores() {
     return;
   }
 
-  tabla.innerHTML = ""; // Limpiar tabla
+  tabla.innerHTML = "";
 
   if (!Array.isArray(profesores)) {
     console.error("Los datos de profesores no son un array:", profesores);
     return;
   }
   
-  // Verificar si el usuario es profesor_guia para restringir acciones
   const userType = sessionStorage.getItem("userType");
   const esProfesorGuia = userType === "profesor_guia";
 
   profesores.forEach((profesor) => {
     const fila = document.createElement("tr");
 
-    // Crear celdas con datos
     fila.innerHTML = `
             <td>${profesor.ID_empleado}</td>
             <td>${profesor.nombre} ${profesor.apellido}</td>
@@ -58,7 +50,7 @@ function actualizarTablaProfesores() {
             <td class="action-buttons">
                 ${!esProfesorGuia ? 
                 `<a href="empleado.html?id=${profesor.ID_empleado}" class="btn btn-sm btn-primary" title="Editar en Empleados">
-                    <i class="fas fa-edit"></i> Editar
+                    <i class="fas fa-edit"></i>
                 </a>` : ''}
             </td>
         `;
@@ -67,7 +59,6 @@ function actualizarTablaProfesores() {
   });
 }
 
-// Consultar profesores (filtrar)
 async function consultarProfesores() {
   const opciones = ["Especialidad", "Nivel Académico"];
   const opcion = prompt(
@@ -112,7 +103,6 @@ async function consultarProfesores() {
         const result = await response.json();
 
         if (Array.isArray(result) && result.length > 0) {
-          // Necesitamos información completa de los profesores
           const profesoresDetallados = [];
 
           for (const profesor of result) {
@@ -136,7 +126,7 @@ async function consultarProfesores() {
           }
         } else {
           alert("No se encontraron profesores con ese criterio");
-          cargarProfesores(); // Volver a mostrar todos
+          cargarProfesores(); 
         }
       } catch (error) {
         console.error("Error al consultar profesores:", error);
@@ -146,17 +136,14 @@ async function consultarProfesores() {
   }
 }
 
-// Función para aplicar restricciones según el tipo de usuario
 function aplicarRestricciones() {
   const userType = sessionStorage.getItem("userType");
   if (userType === "profesor_guia") {
-    // Ocultar el botón de crear nuevo profesor
     const crearBtn = document.querySelector('a[href="empleado.html"]');
     if (crearBtn) {
       crearBtn.style.display = "none";
     }
-    
-    // También podemos ocultar la alerta informativa
+
     const infoAlert = document.querySelector('.alert.alert-info');
     if (infoAlert) {
       infoAlert.innerHTML = "<h5 class='alert-heading'><i class='fas fa-info-circle me-2'></i>Información</h5><p>Como profesor guía, solo puede ver la información de los profesores.</p>";
@@ -164,7 +151,6 @@ function aplicarRestricciones() {
   }
 }
 
-// Función para obtener parámetros de la URL
 function getUrlParams() {
   const params = {};
   const queryString = window.location.search;
@@ -177,42 +163,33 @@ function getUrlParams() {
   return params;
 }
 
-// Función para redirigir a empleado con el id
 function redirigirAEmpleado(id) {
   window.location.href = `empleado.html?id=${id}`;
 }
 
-// Asociar eventos a botones cuando el DOM esté cargado
 document.addEventListener("DOMContentLoaded", function () {
-  // Verificar autenticación
   const userType = sessionStorage.getItem("userType");
   if (!userType) {
     window.location.href = "../login.html";
     return;
   }
 
-  // Verificar si hay un ID en la URL
   const params = getUrlParams();
   if (params.id) {
-    // Si es profesor_guia, no permitir la edición
     if (userType === "profesor_guia") {
       alert("No tiene permisos para editar profesores");
       window.location.href = "profesor.html";
       return;
     }
-    
-    // Redirigir a la página de empleados con el ID
+
     redirigirAEmpleado(params.id);
-    return; // Importante: evitar que se ejecute el resto del código
+    return; 
   }
 
-  // Cargar datos iniciales
   cargarProfesores();
-  
-  // Aplicar restricciones según el tipo de usuario
+
   aplicarRestricciones();
 
-  // Asociar eventos a botones
   const btnConsultar = document.getElementById("btnConsultar");
   if (btnConsultar) {
     btnConsultar.addEventListener("click", consultarProfesores);
